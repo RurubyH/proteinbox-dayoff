@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>蛋白盒子｜選休系統</title>
+<title>蛋白盒子-南崁店 選休系統</title>
 <style>
   :root{
     --brand:#2E7D4F; --brand-soft:#E6F2EA; --ink:#1F2A24; --mute:#7A867F;
@@ -44,6 +44,17 @@
   .mylist{font-size:14px;line-height:1.9}
   .mylist .row{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line)}
   .muted{color:var(--mute);font-size:13px}
+  .day.pend{background:#FFF4DE;border-color:var(--gold)}
+  .day.pend .r{color:#B07415;font-weight:600}
+  .b-req{background:#FFF4DE;color:#8A5A0B;border:1.5px dashed var(--gold)}
+  .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:20px;margin-left:6px;vertical-align:1px}
+  .tag.ok{background:var(--brand-soft);color:var(--brand)}
+  .tag.wait{background:#FFF4DE;color:#B07415}
+  .tag.no{background:var(--warn-soft);color:var(--warn)}
+  textarea{width:100%;min-height:90px;border:1.5px solid var(--line);border-radius:12px;padding:10px;font:inherit;font-size:15px;margin-top:12px;resize:vertical}
+  textarea:focus{outline:none;border-color:var(--gold)}
+  .howto{margin-top:12px;background:#FFF8EC;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.7;color:#6B5A3A}
+  h1{line-height:1.3}
   /* bottom sheet */
   .mask{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-end;justify-content:center;z-index:10}
   .mask.show{display:flex}
@@ -86,6 +97,7 @@
 /* ===== 設定：貼上 GAS 部署後的 /exec 網址 ===== */
 const API_URL = 'https://script.google.com/macros/s/AKfycbyE70slT--1TbosBT0znvA6Cn2hYrfjIVNK_CeGkZZBvpz3cHLtswKGOgZZwGOWvTi3YQ/exec';
 const POLL_MS = 15000;
+const REQ = '排休協調';   // 名額已滿時的申請功能名稱，想換字改這裡
 
 /* ===== 取得專屬連結碼（網址 ?k= 優先，沒有就用上次存的） ===== */
 let K = new URLSearchParams(location.search).get('k') || '';
@@ -168,7 +180,7 @@ function statusHtml() {
     ? `<div class="dot" style="background:var(--gold)"></div><div>尚未開放｜<b>${dt(S.open)}</b> 開始<br><span class="muted">倒數 <span id="cd">${countdown(S.open - nowServer())}</span></span></div>`
     : `<div class="dot" style="background:var(--gold)"></div>尚未開放，開放時間另行通知`;
   if (st === 'closed') return `<div class="dot" style="background:var(--mute)"></div>選休已截止，有問題請聯絡管理員`;
-  return `<div class="dot" style="background:var(--brand)"></div><div><b>開放選休中</b>（先選先贏）${S.deadline ? `<br><span class="muted">截止：${dt(S.deadline)}</span>` : ''}</div>`;
+  return `<div class="dot" style="background:var(--brand)"></div><div><b>開放選休中</b>${S.deadline ? `<br><span class="muted">截止：${dt(S.deadline)}</span>` : ''}</div>`;
 }
 
 function render() {
@@ -185,67 +197,85 @@ function render() {
       const ds = `${S.month}-${String(d).padStart(2, '0')}`, o = map[ds];
       let cls = 'day', label = '';
       const sl = o ? me.allowed.map(sf => ({ sf, ...o.slots[sf] })) : [];
-      const openSl = sl.filter(x => x.cap > 0);
+      // 名額設 0 或沒有列在日期清單的日子，一律顯示「已滿」（不透露是設定關閉）
       if (o && o.closed) { cls += ' off'; label = '公休'; }
-      else if (!o || !openSl.length) { cls += ' off'; label = '不開放'; }
-      else if (o.mine.length) { cls += ' mine'; label = o.mine.length > 1 ? '休早晚' : o.mine[0] === '整天' ? '休整天' : '休' + o.mine[0][0]; }
-      else if (openSl.every(x => x.left <= 0)) { cls += ' full'; label = me.role === '正職' ? '正職已休' : '已滿'; }
+      else if (o && (o.mine.length || o.approved.length)) {
+        const all = o.mine.concat(o.approved);
+        cls += ' mine'; label = all.length > 1 ? '休早晚' : all[0] === '整天' ? '休整天' : '休' + all[0][0];
+      }
+      else if (o && o.pending.length) { cls += ' pend'; label = '審核中'; }
+      else if (!o || sl.every(x => x.left <= 0)) { cls += ' full'; label = '已滿'; }
       else if (me.role === '正職') label = '可休';
       else if (sl.length === 1) label = `剩 ${sl[0].left}`;
-      else label = sl.map(x => x.cap <= 0 ? `<span class="z">${x.sf[0]}✕</span>` : x.left <= 0 ? `<span class="z">${x.sf[0]}滿</span>` : `${x.sf[0]}${x.left}`).join(' ');
+      else label = sl.map(x => x.left <= 0 ? `<span class="z">${x.sf[0]}滿</span>` : `${x.sf[0]}${x.left}`).join(' ');
       cal += `<div class="${cls}" onclick="openDay('${ds}')"><span class="n">${d}</span><span class="r">${label}</span></div>`;
     }
   }
 
-  const mine = S.dates.filter(d => d.mine.length);
+  const items = S.dates.filter(d => d.mine.length).map(d => ({ date: d.date, shift: d.mine.join('、'), tag: '' }))
+    .concat((S.requests || []).map(r => ({ date: r.date, shift: r.shift, note: r.status === '不核准' ? r.note : '',
+      tag: r.status === '核准' ? `<span class="tag ok">${REQ}・已核准</span>` : r.status === '待審核' ? '<span class="tag wait">審核中</span>' : '<span class="tag no">未核准</span>' })))
+    .sort((a, b) => a.date < b.date ? -1 : 1);
   $('app').innerHTML = `
     <header>
-      <h1>🥚 蛋白盒子 選休</h1>
+      <h1>蛋白盒子-南崁店<br>選休系統</h1>
       <div class="who"><b>${me.name}</b><br>${me.role}</div>
     </header>
     <div class="card">
       <div class="status" id="status">${statusHtml()}</div>
       <div class="quota"><span>本月已休</span><span><span class="big">${fmt(me.used)}</span> / ${fmt(me.quota)} 天</span></div>
       <div class="bar"><i style="width:${pct}%"></i></div>
-      ${me.role === '早晚班' ? '<div class="muted" style="margin-top:6px">只休早班或晚班不扣天數，同一天早晚班都休才算 1 天</div>' : ''}
     </div>
     <div class="card">
       <div class="month">${S.month ? S.month.replace('-', ' 年 ') + ' 月' : ''}</div>
       <div class="grid">${cal}</div>
       <div class="legend">
-        <span><i style="background:#fff;border:1.5px solid var(--line)"></i>可選</span>
-        <span><i style="background:var(--brand)"></i>我的休假</span>
-        <span><i style="background:var(--warn-soft)"></i>已滿</span>
-        <span><i style="background:#F0F2F1"></i>公休／不開放</span>
+        <span><i style="background:#fff;border:1.5px solid var(--line)"></i>可選休</span>
+        <span><i style="background:var(--brand)"></i>已排休</span>
+        <span><i style="background:var(--warn-soft)"></i>已額滿</span>
+        <span><i style="background:#F0F2F1"></i>公休</span>
+        ${S.dates.some(d => d.pending.length) ? '<span><i style="background:#FFF4DE;border:1.5px solid var(--gold)"></i>審核中</span>' : ''}
       </div>
     </div>
     <div class="card">
-      <div style="font-weight:700;margin-bottom:6px">我選的日子</div>
-      <div class="mylist">${mine.length ? mine.map(d => {
-        const [, mm, dd] = d.date.split('-'); const w = WD[new Date(d.date.replace(/-/g, '/')).getDay()];
-        return `<div class="row"><span>${+mm}/${+dd}（${w}）</span><span>${d.mine.join('、')}</span></div>`;
-      }).join('') : '<span class="muted">還沒選，點日曆上的日期開始選</span>'}</div>
+      <div style="font-weight:700;margin-bottom:6px">已排休</div>
+      <div class="mylist">${items.length ? items.map(it =>
+        `<div class="row"><span>${md(it.date)}</span><span>${it.shift}${it.tag}</span></div>${it.note ? `<div class="muted" style="text-align:right;margin-top:-4px">店長：${it.note}</div>` : ''}`
+      ).join('') : '<span class="muted">還沒排休，點月曆上的日期開始選</span>'}</div>
+      <div class="howto">${S.allowCancel
+        ? `💡 <b>想更改？</b>點月曆上<b style="color:var(--brand)">綠色</b>的日期 → 按「取消」，再重新選其他日期。<br>📝 <b>名額已滿但有需要？</b>點該日期 →「提出${REQ}」，由店長審核。${S.deadline ? `<br>⚠️ ${dt(S.deadline)} 截止後無法自行取消，請聯絡店長。` : ''}`
+        : `💡 如需取消或更改，請聯絡店長。<br>📝 <b>名額已滿但有需要？</b>點該日期 →「提出${REQ}」，由店長審核。`}</div>
     </div>
     <div class="muted" style="text-align:center">畫面每 15 秒自動更新・點日期查看詳情</div>`;
 }
 
+function md(ds) { const [y, m, d] = ds.split('-').map(Number); return `${m}/${d}（${WD[new Date(y, m - 1, d).getDay()]}）`; }
+
 function openDay(ds) {
-  const o = S.dates.find(d => d.date === ds), me = S.me, st = liveStatus();
+  const Z = { cap: 0, left: 0 };
+  const o = S.dates.find(d => d.date === ds) || { date: ds, note: '', slots: { '整天': Z, '早班': Z, '晚班': Z }, mine: [], approved: [], pending: [], off: [] };
+  const me = S.me, st = liveStatus();
   if (o && o.closed) return toast('這天公休' + (o.closedName ? `（${o.closedName}）` : '') + '，不用排休 🎉');
-  if (!o || !me.allowed.some(sf => o.slots[sf].cap > 0)) return;
   const [y, m, d] = ds.split('-').map(Number), w = WD[new Date(y, m - 1, d).getDay()];
   let btns = '';
 
+  let info = '';
   if (st === 'open') {
     me.allowed.forEach(sf => {
+      const nm = sf === '整天' ? '整天' : sf;
       if (o.mine.includes(sf)) {
-        if (S.allowCancel) btns += `<button class="b-cancel" onclick="act('cancel','${ds}','${sf}')">取消休${sf === '整天' ? '整天' : sf}</button>`;
+        if (S.allowCancel) btns += `<button class="b-cancel" onclick="act('cancel','${ds}','${sf}')">取消休${nm}</button>`;
+      } else if (o.approved.includes(sf)) {
+        info += `<div class="muted" style="margin-top:6px">✅ ${nm}：${REQ}已核准，如需更改請聯絡店長</div>`;
+      } else if (o.pending.includes(sf)) {
+        btns += `<button class="b-cancel" onclick="act('withdraw','${ds}','${sf}')">撤回${nm}的${REQ}申請</button>`;
       } else {
         const s2 = o.slots[sf];
         // 早晚班：只有「補上另一班、變成整天」時才扣 1 天
         const cost = me.role !== '早晚班' ? 1 : (me.allowed.every(x => x === sf || o.mine.includes(x)) ? 1 : 0);
-        const reason = s2.cap <= 0 ? '（不開放）' : s2.left <= 0 ? (sf === '整天' ? '（已有正職休）' : '（已滿）') : me.used + cost > me.quota ? '（天數不足）' : '';
-        btns += `<button class="b-main" ${reason ? 'disabled' : ''} onclick="act('pick','${ds}','${sf}')">選休${sf === '整天' ? '整天' : sf} ${reason}</button>`;
+        const reason = s2.left <= 0 ? '（已額滿）' : me.used + cost > me.quota ? '（天數不足）' : '';
+        btns += `<button class="b-main" ${reason ? 'disabled' : ''} onclick="act('pick','${ds}','${sf}')">選休${nm} ${reason}</button>`;
+        if (reason) btns += `<button class="b-req" onclick="reqForm('${ds}','${sf}')">提出${REQ}（${nm}）</button>`;
       }
     });
   }
@@ -258,21 +288,39 @@ function openDay(ds) {
     <h3>${m}/${d}（${w}）</h3>
     <div class="slots">${['早班','晚班','整天'].map(sf => { const x = o.slots[sf];
         const name = sf === '整天' ? '正職' : sf;
-        const txt = x.cap <= 0 ? '不開放' : sf === '整天' ? (x.left ? '可休' : '已有人休') : `剩 ${x.left} / ${x.cap}`;
-        return `<div class="slot ${x.cap > 0 && x.left <= 0 ? 'z' : ''} ${me.allowed.includes(sf) ? 'me' : ''}"><b>${name}</b>${txt}</div>`; }).join('')}</div>
+        const txt = x.left <= 0 ? '已額滿' : sf === '整天' ? '可休' : `剩 ${x.left} 位`;
+        return `<div class="slot ${x.left <= 0 ? 'z' : ''} ${me.allowed.includes(sf) ? 'me' : ''}"><b>${name}</b>${txt}</div>`; }).join('')}</div>
     ${o.note && !/^(週|公休)/.test(o.note) ? `<div class="muted">📌 ${o.note}</div>` : ''}
-    ${off}${tip}
+    ${off}${info}${tip}
     <div class="btns">${btns}</div>`;
   $('mask').classList.add('show');
 }
+function reqForm(ds, sf) {
+  $('sheet').innerHTML = `
+    <h3>${REQ}申請</h3>
+    <div class="muted">${md(ds)}・${sf}</div>
+    <textarea id="reqText" maxlength="200" placeholder="請簡單說明需求，例如：家中有事需要處理"></textarea>
+    <div class="muted" style="margin-top:6px">送出後由店長審核。</div>
+    <div class="btns">
+      <button class="b-main" onclick="sendReq('${ds}','${sf}')">送出申請</button>
+      <button class="b-ghost" onclick="openDay('${ds}')">返回</button>
+    </div>`;
+  setTimeout(() => $('reqText') && $('reqText').focus(), 100);
+}
+function sendReq(ds, sf) {
+  const t = ($('reqText').value || '').trim();
+  if (t.length < 2) return toast('請簡單說明需求', true);
+  act('request', ds, sf, t);
+}
+
 function closeSheet() { $('mask').classList.remove('show'); }
 $('mask').addEventListener('click', e => { if (e.target.id === 'mask') closeSheet(); });
 
-async function act(action, date, shift) {
+async function act(action, date, shift, reason) {
   if (busy) return; busy = true;
-  closeSheet(); loading(true, action === 'pick' ? '搶位中…' : '取消中…');
+  closeSheet(); loading(true, { pick: '選休中…', cancel: '取消中…', request: '送出中…', withdraw: '撤回中…' }[action]);
   try {
-    const res = await api({ action, k: K, date, shift });
+    const res = await api({ action, k: K, date, shift, reason });
     if (res.state) setState(res.state);
     toast(res.ok ? '✅ ' + res.msg : res.msg, !res.ok);
   } catch (e) {
