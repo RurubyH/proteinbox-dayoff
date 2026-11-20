@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>蛋白盒子｜選休系統</title>
+<style>
+  :root{
+    --brand:#2E7D4F; --brand-soft:#E6F2EA; --ink:#1F2A24; --mute:#7A867F;
+    --line:#E3E8E5; --bg:#F6F8F7; --warn:#C0392B; --warn-soft:#FBEAE8; --gold:#E8A33D;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:560px;margin:0 auto;padding:16px 14px 40px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  h1{font-size:19px;margin:0}
+  .who{font-size:13px;color:var(--mute);text-align:right}
+  .who b{color:var(--ink);font-size:15px}
+  .card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);margin-bottom:12px}
+  .status{display:flex;align-items:center;gap:10px;font-size:14px}
+  .dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .quota{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;font-size:14px}
+  .quota .big{font-size:24px;font-weight:700;color:var(--brand)}
+  .bar{height:8px;background:var(--brand-soft);border-radius:4px;margin-top:6px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--brand);transition:width .3s}
+  .month{font-weight:700;font-size:17px;margin-bottom:8px;text-align:center}
+  .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+  .wd{text-align:center;font-size:12px;color:var(--mute);padding:2px 0}
+  .day{min-height:58px;border-radius:10px;background:#fff;border:1.5px solid var(--line);padding:4px 2px;text-align:center;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;transition:transform .08s}
+  .day:active{transform:scale(.95)}
+  .day .n{font-size:15px;font-weight:600}
+  .day .r{font-size:10.5px;color:var(--brand);white-space:nowrap;letter-spacing:-.3px}
+  .day .r .z{color:var(--warn)}
+  .day.empty{visibility:hidden}
+  .day.off{background:#F0F2F1;color:#B7BFBA;border-color:transparent;cursor:default}
+  .day.off .r{color:#B7BFBA}
+  .day.full{background:var(--warn-soft);border-color:transparent}
+  .day.full .r{color:var(--warn)}
+  .day.mine{background:var(--brand);border-color:var(--brand);color:#fff}
+  .day.mine .r{color:#fff;font-weight:600}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--mute);margin-top:10px;justify-content:center}
+  .legend span{display:flex;align-items:center;gap:4px}
+  .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .mylist{font-size:14px;line-height:1.9}
+  .mylist .row{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line)}
+  .muted{color:var(--mute);font-size:13px}
+  /* bottom sheet */
+  .mask{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-end;justify-content:center;z-index:10}
+  .mask.show{display:flex}
+  .sheet{background:#fff;width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));animation:up .2s}
+  @keyframes up{from{transform:translateY(40px);opacity:.5}}
+  .sheet h3{margin:0 0 4px;font-size:18px}
+  .btns{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+  button{font:inherit;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:600;cursor:pointer}
+  .b-main{background:var(--brand);color:#fff}
+  .b-cancel{background:var(--warn-soft);color:var(--warn)}
+  .b-ghost{background:#EEF1EF;color:var(--ink)}
+  button:disabled{opacity:.45}
+  .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .slot{background:#F4F6F5;border-radius:10px;padding:8px;text-align:center;font-size:13px;color:var(--mute)}
+  .slot b{display:block;font-size:13px;color:var(--ink);margin-bottom:2px}
+  .slot.me{background:var(--brand-soft);color:var(--brand)}
+  .slot.z{color:var(--warn)}
+  .offlist{font-size:13px;color:var(--mute);margin-top:8px;line-height:1.7}
+  /* toast & loading */
+  .toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;z-index:30;max-width:90%;text-align:center;display:none}
+  .toast.err{background:var(--warn)}
+  .loading{position:fixed;inset:0;background:rgba(255,255,255,.7);display:none;align-items:center;justify-content:center;z-index:20;flex-direction:column;gap:10px;font-size:14px;color:var(--mute)}
+  .loading.show{display:flex}
+  .spin{width:34px;height:34px;border:4px solid var(--brand-soft);border-top-color:var(--brand);border-radius:50%;animation:sp 0.8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .full-msg{text-align:center;padding:60px 20px;color:var(--mute);line-height:1.8}
+  .full-msg button{margin-top:16px;padding:12px 28px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="full-msg">載入中…</div>
+</div>
+
+<div class="mask" id="mask"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+<div class="loading" id="loading"><div class="spin"></div><div id="loadingText">送出中…</div></div>
+
+<script>
+/* ===== 設定：貼上 GAS 部署後的 /exec 網址 ===== */
+const API_URL = 'https://script.google.com/macros/s/請貼上你的部署ID/exec';
+const POLL_MS = 15000;
+
+/* ===== 取得專屬連結碼（網址 ?k= 優先，沒有就用上次存的） ===== */
+let K = new URLSearchParams(location.search).get('k') || '';
+try { if (K) localStorage.setItem('leave_k', K); else K = localStorage.getItem('leave_k') || ''; } catch (e) {}
+
+let S = null, busy = false, clockOffset = 0, pollTimer = null;
+const $ = id => document.getElementById(id);
+const WD = ['日','一','二','三','四','五','六'];
+const fmt = n => (Math.round(n * 10) / 10).toString();
+
+async function api(payload, timeoutMs = 25000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const r = await fetch(API_URL, {
+      method: 'POST', body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, signal: ctrl.signal
+    });
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+
+function toast(msg, isErr) {
+  const el = $('toast'); el.textContent = msg; el.className = 'toast' + (isErr ? ' err' : '');
+  el.style.display = 'block'; clearTimeout(el._t);
+  el._t = setTimeout(() => el.style.display = 'none', isErr ? 4000 : 2500);
+}
+function loading(on, text) { $('loading').classList.toggle('show', on); if (text) $('loadingText').textContent = text; }
+
+function fatal(msg, retry) {
+  $('app').innerHTML = `<div class="full-msg">${msg}${retry ? '<br><button class="b-main" onclick="refresh(true)">重新載入</button>' : ''}</div>`;
+}
+
+async function refresh(first) {
+  if (!K) return fatal('請使用管理員傳給你的<b>專屬連結</b>開啟 🙏');
+  if (first) loading(true, '載入中…');
+  for (let i = 0; i < 2; i++) {
+    try {
+      const res = await api({ action: 'state', k: K });
+      loading(false);
+      if (!res.ok) {
+        if (res.code === 'NO_USER') { try { localStorage.removeItem('leave_k'); } catch (e) {} }
+        return fatal(res.msg, res.code !== 'NO_USER');
+      }
+      setState(res.state);
+      return;
+    } catch (e) { if (i === 0) await new Promise(r => setTimeout(r, 1500)); }
+  }
+  loading(false);
+  if (!S) fatal('連線中斷了，請確認網路後再試一次', true);
+}
+
+function setState(st) {
+  S = st; clockOffset = st.now - Date.now(); render();
+}
+
+function nowServer() { return Date.now() + clockOffset; }
+function liveStatus() {
+  const n = nowServer();
+  if (!S.open || n < S.open) return 'before';
+  if (S.deadline && n > S.deadline) return 'closed';
+  return 'open';
+}
+function dt(ms) {
+  const d = new Date(ms);
+  return `${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function countdown(ms) {
+  let s = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(s / 86400); s %= 86400;
+  const h = Math.floor(s / 3600); s %= 3600;
+  const m = Math.floor(s / 60); s %= 60;
+  return (d ? d + ' 天 ' : '') + `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function statusHtml() {
+  const st = liveStatus();
+  if (!S.month) return `<div class="dot" style="background:var(--mute)"></div>管理員尚未設定選休月份`;
+  if (st === 'before') return S.open
+    ? `<div class="dot" style="background:var(--gold)"></div><div>尚未開放｜<b>${dt(S.open)}</b> 開始<br><span class="muted">倒數 <span id="cd">${countdown(S.open - nowServer())}</span></span></div>`
+    : `<div class="dot" style="background:var(--gold)"></div>尚未開放，開放時間另行通知`;
+  if (st === 'closed') return `<div class="dot" style="background:var(--mute)"></div>選休已截止，有問題請聯絡管理員`;
+  return `<div class="dot" style="background:var(--brand)"></div><div><b>開放選休中</b>（先選先贏）${S.deadline ? `<br><span class="muted">截止：${dt(S.deadline)}</span>` : ''}</div>`;
+}
+
+function render() {
+  const me = S.me, pct = me.quota ? Math.min(100, me.used / me.quota * 100) : 0;
+  const map = {}; S.dates.forEach(d => map[d.date] = d);
+
+  let cal = '';
+  if (S.month) {
+    const [y, m] = S.month.split('-').map(Number);
+    const first = new Date(y, m - 1, 1).getDay(), days = new Date(y, m, 0).getDate();
+    cal += WD.map(w => `<div class="wd">${w}</div>`).join('');
+    for (let i = 0; i < first; i++) cal += `<div class="day empty"></div>`;
+    for (let d = 1; d <= days; d++) {
+      const ds = `${S.month}-${String(d).padStart(2, '0')}`, o = map[ds];
+      let cls = 'day', label = '';
+      const sl = o ? me.allowed.map(sf => ({ sf, ...o.slots[sf] })) : [];
+      const openSl = sl.filter(x => x.cap > 0);
+      if (o && o.closed) { cls += ' off'; label = '公休'; }
+      else if (!o || !openSl.length) { cls += ' off'; label = '不開放'; }
+      else if (o.mine.length) { cls += ' mine'; label = o.mine.length > 1 ? '休早晚' : o.mine[0] === '整天' ? '休整天' : '休' + o.mine[0][0]; }
+      else if (openSl.every(x => x.left <= 0)) { cls += ' full'; label = me.role === '正職' ? '正職已休' : '已滿'; }
+      else if (me.role === '正職') label = '可休';
+      else if (sl.length === 1) label = `剩 ${sl[0].left}`;
+      else label = sl.map(x => x.cap <= 0 ? `<span class="z">${x.sf[0]}✕</span>` : x.left <= 0 ? `<span class="z">${x.sf[0]}滿</span>` : `${x.sf[0]}${x.left}`).join(' ');
+      cal += `<div class="${cls}" onclick="openDay('${ds}')"><span class="n">${d}</span><span class="r">${label}</span></div>`;
+    }
+  }
+
+  const mine = S.dates.filter(d => d.mine.length);
+  $('app').innerHTML = `
+    <header>
+      <h1>🥚 蛋白盒子 選休</h1>
+      <div class="who"><b>${me.name}</b><br>${me.role}</div>
+    </header>
+    <div class="card">
+      <div class="status" id="status">${statusHtml()}</div>
+      <div class="quota"><span>本月已休</span><span><span class="big">${fmt(me.used)}</span> / ${fmt(me.quota)} 天</span></div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      ${me.role === '早晚班' ? '<div class="muted" style="margin-top:6px">只休早班或晚班不扣天數，同一天早晚班都休才算 1 天</div>' : ''}
+    </div>
+    <div class="card">
+      <div class="month">${S.month ? S.month.replace('-', ' 年 ') + ' 月' : ''}</div>
+      <div class="grid">${cal}</div>
+      <div class="legend">
+        <span><i style="background:#fff;border:1.5px solid var(--line)"></i>可選</span>
+        <span><i style="background:var(--brand)"></i>我的休假</span>
+        <span><i style="background:var(--warn-soft)"></i>已滿</span>
+        <span><i style="background:#F0F2F1"></i>公休／不開放</span>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:6px">我選的日子</div>
+      <div class="mylist">${mine.length ? mine.map(d => {
+        const [, mm, dd] = d.date.split('-'); const w = WD[new Date(d.date.replace(/-/g, '/')).getDay()];
+        return `<div class="row"><span>${+mm}/${+dd}（${w}）</span><span>${d.mine.join('、')}</span></div>`;
+      }).join('') : '<span class="muted">還沒選，點日曆上的日期開始選</span>'}</div>
+    </div>
+    <div class="muted" style="text-align:center">畫面每 15 秒自動更新・點日期查看詳情</div>`;
+}
+
+function openDay(ds) {
+  const o = S.dates.find(d => d.date === ds), me = S.me, st = liveStatus();
+  if (o && o.closed) return toast('這天公休' + (o.closedName ? `（${o.closedName}）` : '') + '，不用排休 🎉');
+  if (!o || !me.allowed.some(sf => o.slots[sf].cap > 0)) return;
+  const [y, m, d] = ds.split('-').map(Number), w = WD[new Date(y, m - 1, d).getDay()];
+  let btns = '';
+
+  if (st === 'open') {
+    me.allowed.forEach(sf => {
+      if (o.mine.includes(sf)) {
+        if (S.allowCancel) btns += `<button class="b-cancel" onclick="act('cancel','${ds}','${sf}')">取消休${sf === '整天' ? '整天' : sf}</button>`;
+      } else {
+        const s2 = o.slots[sf];
+        // 早晚班：只有「補上另一班、變成整天」時才扣 1 天
+        const cost = me.role !== '早晚班' ? 1 : (me.allowed.every(x => x === sf || o.mine.includes(x)) ? 1 : 0);
+        const reason = s2.cap <= 0 ? '（不開放）' : s2.left <= 0 ? (sf === '整天' ? '（已有正職休）' : '（已滿）') : me.used + cost > me.quota ? '（天數不足）' : '';
+        btns += `<button class="b-main" ${reason ? 'disabled' : ''} onclick="act('pick','${ds}','${sf}')">選休${sf === '整天' ? '整天' : sf} ${reason}</button>`;
+      }
+    });
+  }
+  btns += `<button class="b-ghost" onclick="closeSheet()">關閉</button>`;
+
+  const off = (o.off || []).length ? `<div class="offlist">這天已休：${o.off.map(x => `${x.name}（${x.shift}）`).join('、')}</div>` : '';
+  const tip = st === 'before' ? '<div class="muted" style="margin-top:6px">尚未開放，開放後才能選</div>'
+            : st === 'closed' ? '<div class="muted" style="margin-top:6px">已截止</div>' : '';
+  $('sheet').innerHTML = `
+    <h3>${m}/${d}（${w}）</h3>
+    <div class="slots">${['早班','晚班','整天'].map(sf => { const x = o.slots[sf];
+        const name = sf === '整天' ? '正職' : sf;
+        const txt = x.cap <= 0 ? '不開放' : sf === '整天' ? (x.left ? '可休' : '已有人休') : `剩 ${x.left} / ${x.cap}`;
+        return `<div class="slot ${x.cap > 0 && x.left <= 0 ? 'z' : ''} ${me.allowed.includes(sf) ? 'me' : ''}"><b>${name}</b>${txt}</div>`; }).join('')}</div>
+    ${o.note && !/^(週|公休)/.test(o.note) ? `<div class="muted">📌 ${o.note}</div>` : ''}
+    ${off}${tip}
+    <div class="btns">${btns}</div>`;
+  $('mask').classList.add('show');
+}
+function closeSheet() { $('mask').classList.remove('show'); }
+$('mask').addEventListener('click', e => { if (e.target.id === 'mask') closeSheet(); });
+
+async function act(action, date, shift) {
+  if (busy) return; busy = true;
+  closeSheet(); loading(true, action === 'pick' ? '搶位中…' : '取消中…');
+  try {
+    const res = await api({ action, k: K, date, shift });
+    if (res.state) setState(res.state);
+    toast(res.ok ? '✅ ' + res.msg : res.msg, !res.ok);
+  } catch (e) {
+    toast('連線中斷，請再按一次（不確定有沒有成功的話，看日曆顏色）', true);
+    refresh();
+  } finally { loading(false); busy = false; }
+}
+
+/* 倒數與自動更新 */
+let lastSt = null;
+setInterval(() => {
+  if (!S) return;
+  const st = liveStatus();
+  if (st !== lastSt) { if (lastSt !== null) render(); lastSt = st; }
+  if (st === 'before' && $('cd')) $('cd').textContent = countdown(S.open - nowServer());
+}, 1000);
+
+function startPoll() { clearInterval(pollTimer); pollTimer = setInterval(() => { if (!document.hidden && !busy) refresh(); }, POLL_MS); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S) refresh(); });
+
+refresh(true); startPoll();
+</script>
+</body>
+</html>
