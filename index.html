@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>蛋白盒子南崁店 選休系統</title>
+<title>蛋白盒子-南崁店 選休系統</title>
 <style>
   :root{
     --brand:#2E7D4F; --brand-soft:#E6F2EA; --ink:#1F2A24; --mute:#7A867F;
@@ -218,7 +218,7 @@ function render() {
     .sort((a, b) => a.date < b.date ? -1 : 1);
   $('app').innerHTML = `
     <header>
-      <h1>蛋白盒子南崁店<br>選休系統</h1>
+      <h1>蛋白盒子-南崁店<br>選休系統</h1>
       <div class="who"><b>${me.name}</b><br>${me.role}</div>
     </header>
     <div class="card">
@@ -243,8 +243,8 @@ function render() {
         `<div class="row"><span>${md(it.date)}</span><span>${it.shift}${it.tag}</span></div>${it.note ? `<div class="muted" style="text-align:right;margin-top:-4px">店長：${it.note}</div>` : ''}`
       ).join('') : '<span class="muted">還沒排休，點月曆上的日期開始選</span>'}</div>
       <div class="howto">${S.allowCancel
-        ? `💡 <b>想更改？</b>點月曆上<b style="color:var(--brand)">綠色</b>的日期 → 按「取消」，再重新選其他日期。<br>📝 <b>名額已滿但有需要？</b>點該日期 →「提出${REQ}」，由店長審核。${S.deadline ? `<br>⚠️ ${dt(S.deadline)} 截止後無法自行取消，請聯絡店長。` : ''}`
-        : `💡 如需取消或更改，請聯絡店長。<br>📝 <b>名額已滿但有需要？</b>點該日期 →「提出${REQ}」，由店長審核。`}</div>
+        ? `💡 <b>想更改？</b>點月曆上<b style="color:var(--brand)">綠色</b>的日期 → 按「取消」，再重新選其他日期。<br>📝 <b>有特殊排休需求？</b>點該日期 →「提出${REQ}」，由店長審核。${S.deadline ? `<br>⚠️ ${dt(S.deadline)} 截止後無法自行取消，請聯絡店長。` : ''}`
+        : `💡 如需取消或更改，請聯絡店長。<br>📝 <b>有特殊排休需求？</b>點該日期 →「提出${REQ}」，由店長審核。`}</div>
     </div>
     <div class="muted" style="text-align:center">畫面每 15 秒自動更新・點日期查看詳情</div>`;
 }
@@ -299,7 +299,7 @@ function reqForm(ds, sf) {
   $('sheet').innerHTML = `
     <h3>${REQ}申請</h3>
     <div class="muted">${md(ds)}・${sf}</div>
-    <textarea id="reqText" maxlength="200" placeholder="請說明排班需求"></textarea>
+    <textarea id="reqText" maxlength="200" placeholder="請簡單說明需求，例如：家中有事需要處理"></textarea>
     <div class="muted" style="margin-top:6px">送出後由店長審核。</div>
     <div class="btns">
       <button class="b-main" onclick="sendReq('${ds}','${sf}')">送出申請</button>
@@ -309,7 +309,7 @@ function reqForm(ds, sf) {
 }
 function sendReq(ds, sf) {
   const t = ($('reqText').value || '').trim();
-  if (t.length < 2) return toast('請說明排班需求', true);
+  if (t.length < 2) return toast('請簡單說明需求', true);
   act('request', ds, sf, t);
 }
 
