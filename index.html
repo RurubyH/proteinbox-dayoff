@@ -299,7 +299,7 @@ function reqForm(ds, sf) {
   $('sheet').innerHTML = `
     <h3>${REQ}申請</h3>
     <div class="muted">${md(ds)}・${sf}</div>
-    <textarea id="reqText" maxlength="200" placeholder="請簡單說明需求，例如：家中有事需要處理"></textarea>
+    <textarea id="reqText" maxlength="200" placeholder="請說明排班需求"></textarea>
     <div class="muted" style="margin-top:6px">送出後由店長審核。</div>
     <div class="btns">
       <button class="b-main" onclick="sendReq('${ds}','${sf}')">送出申請</button>
