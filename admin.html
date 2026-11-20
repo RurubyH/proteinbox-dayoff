@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="選休管理">
+<meta name="theme-color" content="#1F2A24">
+<title>選休管理｜蛋白盒子-南崁店</title>
+<style>
+  :root{--brand:#2E7D4F;--brand-soft:#E6F2EA;--ink:#1F2A24;--mute:#7A867F;--line:#E3E8E5;--bg:#F6F8F7;--warn:#C0392B;--warn-soft:#FBEAE8;--gold:#E8A33D;--gold-soft:#FFF4DE}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;background:var(--bg);color:var(--ink)}
+  .top{background:var(--ink);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px}
+  .top .t{font-size:13px;opacity:.7}
+  .top h1{margin:2px 0 10px;font-size:20px}
+  .mrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .msw{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;white-space:nowrap}
+  .msw button{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:8px;width:30px;height:30px;font-size:16px;padding:0}
+  .pill{font-size:11.5px;padding:4px 9px;border-radius:20px;color:#fff;white-space:nowrap}
+  .wrap{padding:12px 12px 96px;max-width:560px;margin:0 auto}
+  .card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);margin-bottom:12px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .stat{background:#fff;border-radius:12px;padding:10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .stat b{display:block;font-size:22px}
+  .stat span{font-size:12px;color:var(--mute)}
+  .stat.g b{color:var(--gold)}
+  .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+  .wd{text-align:center;font-size:12px;color:var(--mute)}
+  .day{min-height:62px;border-radius:9px;border:1.5px solid var(--line);background:#fff;padding:3px 2px;text-align:center;font-size:10.5px;position:relative;line-height:1.35;cursor:pointer}
+  .day:active{transform:scale(.95)}
+  .day .n{font-size:14px;font-weight:700}
+  .day .u{color:var(--brand)} .day .u.f{color:var(--warn)}
+  .day.off{background:#F0F2F1;color:#B7BFBA;border-color:transparent}
+  .day.zero{background:#F7F7F7;border-style:dashed;color:var(--mute)}
+  .day.none{background:transparent;border:1.5px dashed var(--line);color:#C5CCC8}
+  .day .dot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--gold)}
+  .legend{display:flex;gap:10px;justify-content:center;font-size:11.5px;color:var(--mute);margin-top:8px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:3px;vertical-align:-1px}
+  .hint{text-align:center;font-size:12px;color:var(--mute);line-height:1.7}
+  .tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;padding:6px 0 calc(6px + env(safe-area-inset-bottom));z-index:5}
+  .tab{flex:1;text-align:center;font-size:11px;color:var(--mute);position:relative;cursor:pointer}
+  .tab .ic{font-size:21px;display:block;margin-bottom:1px}
+  .tab.on{color:var(--brand);font-weight:700}
+  .badge{position:absolute;top:-2px;left:56%;background:var(--warn);color:#fff;font-size:10px;border-radius:9px;padding:0 5px;min-width:16px}
+  h2{font-size:15px;margin:4px 2px 10px}
+  .req{border-left:4px solid var(--gold)}
+  .req .hd{display:flex;justify-content:space-between;align-items:baseline}
+  .req .nm{font-weight:700;font-size:16px}
+  .chip{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:#EEF1EF;color:var(--mute);margin-left:4px;font-weight:500}
+  .req .why{background:#F7F8F7;border-radius:10px;padding:9px 11px;margin:10px 0;font-size:14px;line-height:1.6;white-space:pre-wrap}
+  .req .meta{font-size:12.5px;color:var(--mute);line-height:1.7}
+  .row2{display:flex;gap:8px;margin-top:10px}
+  button{font:inherit;border:none;border-radius:11px;padding:11px;font-size:15px;font-weight:600;cursor:pointer}
+  .b-ok{flex:1;background:var(--brand);color:#fff}
+  .b-no{flex:1;background:var(--warn-soft);color:var(--warn)}
+  .b-ghost{background:#EEF1EF;color:var(--ink)}
+  .full{width:100%;margin-top:10px}
+  .hist .it{font-size:13.5px;line-height:1.6;padding:8px 0;border-bottom:1px dashed var(--line);display:flex;justify-content:space-between;gap:8px;cursor:pointer}
+  .hist .it:last-child{border-bottom:none}
+  .stepper{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+  .stepper span{width:36px;text-align:center;font-weight:700;font-size:15px}
+  .stepper button{border-radius:0;padding:6px 12px;background:#F4F6F5;font-size:16px}
+  .tog{width:46px;height:27px;border-radius:14px;background:var(--brand);position:relative;flex:none;cursor:pointer;transition:background .15s}
+  .tog::after{content:'';position:absolute;top:3px;right:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:all .15s}
+  .tog.offt{background:#CFD6D2}.tog.offt::after{right:22px}
+  .emp{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .emp:last-child{border-bottom:none}
+  .av{width:36px;height:36px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+  .emp .info{flex:1;min-width:0;cursor:pointer}
+  .emp .info b{font-size:15px}
+  .emp .info .s{font-size:12px;color:var(--mute)}
+  .emp.dis .av,.emp.dis .info{opacity:.45}
+  .lk{background:var(--brand-soft);color:var(--brand);font-size:12.5px;padding:7px 10px;border-radius:8px;font-weight:600}
+  .add{width:100%;background:#fff;border:1.5px dashed var(--brand);color:var(--brand);margin-bottom:12px}
+  .r1{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);font-size:15px}
+  .r1:last-child{border-bottom:none}
+  .r1 .v{color:var(--mute);font-size:14px;text-align:right;cursor:pointer}
+  .wk{display:flex;gap:4px}
+  .wk span{width:29px;height:29px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;background:#F0F2F1;color:var(--mute);cursor:pointer}
+  .wk span.on{background:var(--ink);color:#fff}
+  .hol{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:9px 0;border-bottom:1px dashed var(--line)}
+  .x{color:var(--warn);padding:0 4px;cursor:pointer;font-size:16px}
+  .sub{font-size:12px;color:var(--mute);margin-top:6px;line-height:1.6}
+  input[type=text],input[type=date],input[type=datetime-local],select,textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px;font:inherit;font-size:16px;background:#fff;color:var(--ink)}
+  textarea{min-height:80px;resize:vertical}
+  label.f{display:block;font-size:13px;color:var(--mute);margin:12px 0 5px}
+  .seg{display:flex;background:#EEF1EF;border-radius:10px;padding:3px;gap:3px}
+  .seg span{flex:1;text-align:center;padding:8px 0;border-radius:8px;font-size:14px;cursor:pointer;color:var(--mute)}
+  .seg span.on{background:#fff;color:var(--ink);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .mask{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-end;justify-content:center;z-index:10}
+  .mask.show{display:flex}
+  .sheet{background:#fff;width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto;animation:up .2s}
+  @keyframes up{from{transform:translateY(40px);opacity:.5}}
+  .sheet h3{margin:0 0 2px;font-size:18px}
+  .who{font-size:14px;line-height:1.9;margin:10px 0;background:#F7F8F7;border-radius:10px;padding:8px 12px}
+  .who .k{color:var(--mute);display:inline-block;width:62px}
+  .tag{font-size:11px;padding:1px 6px;border-radius:10px;background:var(--gold-soft);color:#B07415;margin-left:3px}
+  .page{display:none}.page.on{display:block}
+  .toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;z-index:30;max-width:90%;text-align:center;display:none}
+  .toast.err{background:var(--warn)}
+  .loading{position:fixed;inset:0;background:rgba(255,255,255,.6);display:none;align-items:center;justify-content:center;z-index:20}
+  .loading.show{display:flex}
+  .spin{width:34px;height:34px;border:4px solid var(--brand-soft);border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .empty{text-align:center;color:var(--mute);font-size:14px;padding:18px 0}
+  .full-msg{text-align:center;padding:80px 20px;color:var(--mute);line-height:1.8}
+</style>
+</head>
+<body>
+<div id="root"><div class="full-msg">載入中…</div></div>
+<div class="mask" id="mask"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+<div class="loading" id="loading"><div class="spin"></div></div>
+
+<script>
+/* ===== 設定：和 index.html 用同一個 GAS /exec 網址 ===== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbyE70slT--1TbosBT0znvA6Cn2hYrfjIVNK_CeGkZZBvpz3cHLtswKGOgZZwGOWvTi3YQ/exec';
+
+let A = new URLSearchParams(location.search).get('a') || '';
+try { if (A) localStorage.setItem('leave_admin', A); else A = localStorage.getItem('leave_admin') || ''; } catch (e) {}
+
+const $ = id => document.getElementById(id);
+const WD = ['日', '一', '二', '三', '四', '五', '六'];
+const ROLES = ['正職', '早班', '晚班', '早晚班'];
+let S = null, TAB = 'cal', MONTH = '', busy = false;
+
+async function api(payload) {
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 30000);
+  try {
+    const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(Object.assign({ a: A, month: MONTH }, payload)),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, signal: ctrl.signal });
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+function toast(m, err) { const el = $('toast'); el.textContent = m; el.className = 'toast' + (err ? ' err' : ''); el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(() => el.style.display = 'none', err ? 4000 : 2200); }
+function loading(on) { $('loading').classList.toggle('show', on); }
+function openSheet(html) { $('sheet').innerHTML = html; $('mask').classList.add('show'); }
+function closeSheet() { $('mask').classList.remove('show'); }
+$('mask').addEventListener('click', e => { if (e.target.id === 'mask') closeSheet(); });
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function md(ds) { const [y, m, d] = ds.split('-').map(Number); return `${m}/${d}（${WD[new Date(y, m - 1, d).getDay()]}）`; }
+function dt(ms) { const d = new Date(ms); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
+
+async function load(first) {
+  if (!A) return $('root').innerHTML = '<div class="full-msg">請用試算表選單「🔑 顯示管理員連結」取得的連結開啟</div>';
+  if (first) loading(true);
+  try {
+    const res = await api({ action: 'adminState' });
+    if (!res.ok) { $('root').innerHTML = `<div class="full-msg">${esc(res.msg)}</div>`; return; }
+    S = res.state; MONTH = S.month; render();
+  } catch (e) {
+    if (!S) $('root').innerHTML = '<div class="full-msg">連線中斷，請稍後再試<br><br><button class="b-ok" onclick="load(true)">重新載入</button></div>';
+    else toast('連線中斷，請再試一次', true);
+  } finally { loading(false); }
+}
+
+async function act(payload, okMsg) {
+  if (busy) return; busy = true; loading(true);
+  try {
+    const res = await api(payload);
+    if (res.state) { S = res.state; MONTH = S.month; }
+    closeSheet(); render();
+    toast(res.ok ? (okMsg || '已儲存') : res.msg, !res.ok);
+  } catch (e) { toast('連線中斷，請再試一次', true); }
+  finally { loading(false); busy = false; }
+}
+
+function shiftMonth(n) {
+  const [y, m] = MONTH.split('-').map(Number);
+  const d = new Date(y, m - 1 + n, 1);
+  MONTH = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  load(true);
+}
+
+/* ================= 畫面 ================= */
+function render() {
+  const pending = S.requests.filter(r => r.status === '待審核').length;
+  const st = S.status === 'open' ? ['#3BA066', `● 開放中・至 ${dt(S.deadline)}`]
+           : S.status === 'before' ? ['#B07415', S.open ? `${dt(S.open)} 開放` : '尚未開放'] : ['#5C6B63', `${S.selMonth.slice(5)}月 已截止`];
+  $('root').innerHTML = `
+    <div class="top">
+      <div class="t">蛋白盒子-南崁店</div>
+      <h1>選休管理</h1>
+      <div class="mrow">
+        <div class="msw"><button onclick="shiftMonth(-1)">‹</button>${MONTH.replace('-', ' 年 ').replace(/ 0?(\d+)$/, ' $1')} 月<button onclick="shiftMonth(1)">›</button></div>
+        <span class="pill" style="background:${st[0]}">${st[1]}</span>
+      </div>
+    </div>
+    <div class="wrap">
+      <div class="page ${TAB === 'cal' ? 'on' : ''}">${pageCal()}</div>
+      <div class="page ${TAB === 'req' ? 'on' : ''}">${pageReq()}</div>
+      <div class="page ${TAB === 'emp' ? 'on' : ''}">${pageEmp()}</div>
+      <div class="page ${TAB === 'set' ? 'on' : ''}">${pageSet()}</div>
+    </div>
+    <div class="tabs">
+      ${[['cal', '📅', '總覽'], ['req', '📝', '審核'], ['emp', '👥', '員工'], ['set', '⚙️', '設定']].map(([k, ic, nm]) =>
+        `<div class="tab ${TAB === k ? 'on' : ''}" onclick="TAB='${k}';render();scrollTo(0,0)"><span class="ic">${ic}</span>${nm}${k === 'req' && pending ? `<span class="badge">${pending}</span>` : ''}</div>`).join('')}
+    </div>`;
+}
+
+/* ---- 總覽 ---- */
+function pageCal() {
+  const map = {}; S.dates.forEach(d => map[d.date] = d);
+  const [y, m] = MONTH.split('-').map(Number);
+  const first = new Date(y, m - 1, 1).getDay(), days = new Date(y, m, 0).getDate();
+  let total = 0, fullDays = 0;
+  S.dates.forEach(d => {
+    total += d.off['整天'].length + d.off['早班'].length + d.off['晚班'].length;
+    if (!d.closed && ((d.am > 0 && d.used.am >= d.am) || (d.pm > 0 && d.used.pm >= d.pm))) fullDays++;
+  });
+  const pending = S.requests.filter(r => r.status === '待審核').length;
+  let h = WD.map(w => `<div class="wd">${w}</div>`).join('');
+  for (let i = 0; i < first; i++) h += '<div></div>';
+  for (let d = 1; d <= days; d++) {
+    const ds = `${MONTH}-${String(d).padStart(2, '0')}`, o = map[ds];
+    if (!o) { h += `<div class="day none" onclick="dayPanel('${ds}')"><div class="n">${d}</div>未建立</div>`; continue; }
+    if (o.closed) { h += `<div class="day off" onclick="dayPanel('${ds}')"><div class="n">${d}</div>公休</div>`; continue; }
+    const dot = o.pending.length ? '<i class="dot"></i>' : '';
+    if (o.am === 0 && o.pm === 0) { h += `<div class="day zero" onclick="dayPanel('${ds}')">${dot}<div class="n">${d}</div>早0 晚0</div>`; continue; }
+    h += `<div class="day" onclick="dayPanel('${ds}')">${dot}<div class="n">${d}</div>
+      <div class="u${o.used.am >= o.am ? ' f' : ''}">早${o.used.am}/${o.am}</div>
+      <div class="u${o.used.pm >= o.pm ? ' f' : ''}">晚${o.used.pm}/${o.pm}</div></div>`;
+  }
+  return `
+    <div class="stats">
+      <div class="stat"><b>${total}</b><span>已排休人次</span></div>
+      <div class="stat g"><b>${pending}</b><span>待審核</span></div>
+      <div class="stat"><b>${fullDays}</b><span>額滿日</span></div>
+    </div>
+    <div class="card">
+      <div class="grid">${h}</div>
+      <div class="legend">
+        <span><i style="background:#fff;border:1.5px solid var(--line)"></i>已休/名額</span>
+        <span><i style="background:var(--warn)"></i>額滿</span>
+        <span><i style="background:var(--gold);border-radius:50%"></i>待審核</span>
+        <span><i style="background:#F0F2F1"></i>公休</span>
+      </div>
+    </div>
+    <div class="hint">點日期：查看誰休假、調整名額、設為公休<br>名額含正職（正職休整天＝早晚各佔 1）</div>`;
+}
+
+let DAY = null;
+function dayPanel(ds) {
+  const o = S.dates.find(d => d.date === ds);
+  DAY = o ? { date: ds, am: o.am, pm: o.pm, ft: o.ft > 0, closed: o.closed, closedName: o.closedName || '' }
+          : { date: ds, am: S.settings.amDefault, pm: S.settings.pmDefault, ft: true, closed: false, closedName: '' };
+  if (DAY.closed === false && DAY.am === 0 && DAY.pm === 0 && o && o.closed) { DAY.am = S.settings.amDefault; DAY.pm = S.settings.pmDefault; }
+  drawDay(o);
+}
+function drawDay(o) {
+  o = o || S.dates.find(d => d.date === DAY.date);
+  const list = sf => o && o.off[sf].length ? esc(o.off[sf].join('、')) : '—';
+  const sub = !o ? '這天還沒建立，儲存後就會加入日期清單' : o.closed ? `公休${o.closedName ? '・' + esc(o.closedName) : ''}` :
+    [o.am > 0 && o.used.am >= o.am ? '早班已滿' : '', o.pm > 0 && o.used.pm >= o.pm ? '晚班已滿' : '', o.pending.length ? `有 ${o.pending.length} 筆待審核` : ''].filter(Boolean).join('・') || '尚有名額';
+  openSheet(`
+    <h3>${md(DAY.date)}</h3>
+    <div style="font-size:13px;color:var(--mute)">${sub}</div>
+    <div class="who">
+      <div><span class="k">正職</span>${list('整天')}</div>
+      <div><span class="k">早班</span>${list('早班')}</div>
+      <div><span class="k">晚班</span>${list('晚班')}</div>
+      ${o && o.pending.length ? `<div><span class="k">待審核</span>${esc(o.pending.join('、'))}<span class="tag">審核中</span></div>` : ''}
+    </div>
+    <div class="r1"><span>設為公休</span><div class="tog ${DAY.closed ? '' : 'offt'}" onclick="DAY.closed=!DAY.closed;if(!DAY.closed&&!DAY.am&&!DAY.pm){DAY.am=S.settings.amDefault;DAY.pm=S.settings.pmDefault}drawDay()"></div></div>
+    ${DAY.closed ? `<label class="f">公休名稱（員工會看到）</label><input type="text" id="cn" value="${esc(DAY.closedName)}" placeholder="例：元旦、店休">` : `
+    <div class="r1"><span>早班可休</span>${stepper('DAY.am', DAY.am, 'drawDay()')}</div>
+    <div class="r1"><span>晚班可休</span>${stepper('DAY.pm', DAY.pm, 'drawDay()')}</div>
+    <div class="r1"><span>正職可休</span><div class="tog ${DAY.ft ? '' : 'offt'}" onclick="DAY.ft=!DAY.ft;drawDay()"></div></div>
+    <div class="sub">設成 0 時，員工看到的是「已滿」</div>`}
+    <button class="b-ok full" onclick="saveDay()">儲存</button>`);
+}
+function stepper(v, val, after) {
+  return `<div class="stepper"><button onclick="${v}=Math.max(0,${v}-1);${after}">－</button><span>${val}</span><button onclick="${v}=${v}+1;${after}">＋</button></div>`;
+}
+function saveDay() {
+  if (DAY.closed) DAY.closedName = ($('cn') && $('cn').value) || DAY.closedName;
+  act(Object.assign({ action: 'adminSetDay' }, DAY));
+}
+
+/* ---- 審核 ---- */
+function pageReq() {
+  const pend = S.requests.filter(r => r.status === '待審核');
+  const done = S.requests.filter(r => r.status !== '待審核');
+  const card = r => {
+    const o = S.dates.find(d => d.date === r.date);
+    const emp = S.staff.find(s => s.k === r.k);
+    let meta = '';
+    if (o) {
+      if (r.shift !== '晚班') meta += `當天早班：${o.used.am}/${o.am}${o.off['早班'].concat(o.off['整天']).length ? `（${esc(o.off['早班'].concat(o.off['整天']).join('、'))}）` : ''}<br>`;
+      if (r.shift !== '早班') meta += `當天晚班：${o.used.pm}/${o.pm}${o.off['晚班'].concat(o.off['整天']).length ? `（${esc(o.off['晚班'].concat(o.off['整天']).join('、'))}）` : ''}<br>`;
+    }
+    if (emp) meta += `${esc(r.name)}本月已休 ${emp.used}/${emp.quota} 天`;
+    return `<div class="card req">
+      <div class="hd"><span class="nm">${esc(r.name)}<span class="chip">${esc(r.role)}</span></span><span style="color:var(--mute);font-size:13px">${esc(r.time)}</span></div>
+      <div style="margin-top:6px;font-size:15px">📅 <b>${md(r.date)} ${esc(r.shift)}</b></div>
+      <div class="why">${esc(r.reason)}</div>
+      <div class="meta">${meta}</div>
+      <div class="row2"><button class="b-no" onclick="rejectPanel(${r.row})">不核准</button><button class="b-ok" onclick="act({action:'adminReview',row:${r.row},status:'核准'},'已核准')">核准</button></div>
+    </div>`;
+  };
+  return `<h2>待審核（${pend.length}）</h2>
+    ${pend.length ? pend.map(card).join('') : '<div class="card empty">目前沒有待審核的申請 👍</div>'}
+    ${done.length ? `<h2 style="margin-top:18px">已處理</h2><div class="card hist">${done.map(r => `
+      <div class="it" onclick="redoPanel(${r.row})"><span><b>${esc(r.name)}</b>・${md(r.date)} ${esc(r.shift)}${r.note ? `<br><span style="color:var(--mute);font-size:12.5px">${esc(r.note)}</span>` : ''}</span>
+      <span style="color:${r.status === '核准' ? 'var(--brand)' : 'var(--warn)'};white-space:nowrap">${r.status === '核准' ? '✓ 核准' : '✕ 不核准'}</span></div>`).join('')}</div>
+      <div class="hint">點已處理的項目可以修改結果</div>` : ''}`;
+}
+function rejectPanel(row) {
+  const r = S.requests.find(x => x.row === row);
+  openSheet(`<h3>不核准</h3><div style="font-size:13px;color:var(--mute)">${esc(r.name)}・${md(r.date)} ${esc(r.shift)}</div>
+    <label class="f">原因（選填，員工看得到）</label><textarea id="rn" placeholder="例：當天人力不足，改 12/18 可以"></textarea>
+    <button class="b-no full" style="width:100%" onclick="act({action:'adminReview',row:${row},status:'不核准',note:$('rn').value},'已設為不核准')">確定不核准</button>
+    <button class="b-ghost full" onclick="closeSheet()">返回</button>`);
+}
+function redoPanel(row) {
+  const r = S.requests.find(x => x.row === row);
+  openSheet(`<h3>修改審核結果</h3><div style="font-size:13px;color:var(--mute)">${esc(r.name)}・${md(r.date)} ${esc(r.shift)}・目前：${esc(r.status)}</div>
+    <div class="why" style="background:#F7F8F7;border-radius:10px;padding:9px 11px;margin:10px 0;font-size:14px">${esc(r.reason)}</div>
+    ${r.status !== '核准' ? `<button class="b-ok full" style="width:100%" onclick="act({action:'adminReview',row:${row},status:'核准'},'已改為核准')">改為核准</button>` : ''}
+    ${r.status !== '不核准' ? `<button class="b-no full" style="width:100%" onclick="rejectPanel(${row})">改為不核准</button>` : ''}
+    <button class="b-ghost full" onclick="act({action:'adminReview',row:${row},status:'待審核'},'已改回待審核')">改回待審核</button>`);
+}
+
+/* ---- 員工 ---- */
+function pageEmp() {
+  const rows = S.staff.map((e, i) => `
+    <div class="emp ${e.active ? '' : 'dis'}">
+      <div class="av">${esc(e.name[0])}</div>
+      <div class="info" onclick="empPanel(${i})"><b>${esc(e.name)}</b><div class="s">${esc(e.role)}・已休 ${e.used}/${e.quota} 天${e.active ? '' : '・已停用'}</div></div>
+      ${e.active && e.link ? `<button class="lk" onclick="copyLink(${i})">複製連結</button>` : ''}
+      <div class="tog ${e.active ? '' : 'offt'}" onclick="toggleEmp(${i})"></div>
+    </div>`).join('');
+  return `<button class="add" onclick="empPanel(-1)">＋ 新增員工</button>
+    <div class="card">${rows || '<div class="empty">還沒有員工</div>'}</div>
+    <div class="hint">點名字：修改姓名、職稱、可休天數<br>離職：關閉開關，專屬連結立即失效</div>`;
+}
+let EMP = null;
+function empPanel(i) {
+  const e = i >= 0 ? S.staff[i] : null;
+  EMP = e ? { row: e.row, name: e.name, role: e.role, quota: e.quota, active: e.active } : { row: 0, name: '', role: '早班', quota: 4, active: true };
+  drawEmp();
+}
+function drawEmp() {
+  openSheet(`<h3>${EMP.row ? '編輯員工' : '新增員工'}</h3>
+    <label class="f">姓名</label><input type="text" id="en" value="${esc(EMP.name)}" oninput="EMP.name=this.value">
+    <label class="f">職稱</label>
+    <div class="seg">${ROLES.map(r => `<span class="${EMP.role === r ? 'on' : ''}" onclick="EMP.role='${r}';drawEmp()">${r}</span>`).join('')}</div>
+    <div class="r1" style="margin-top:6px"><span>當月可休天數</span>${stepper('EMP.quota', EMP.quota, 'drawEmp()')}</div>
+    ${EMP.row ? `<div class="r1"><span>啟用</span><div class="tog ${EMP.active ? '' : 'offt'}" onclick="EMP.active=!EMP.active;drawEmp()"></div></div>` : ''}
+    <button class="b-ok full" style="width:100%" onclick="act(Object.assign({action:'adminStaff'},EMP),'${EMP.row ? '已儲存' : '已新增，可以複製連結給他了'}')">${EMP.row ? '儲存' : '新增'}</button>`);
+}
+function toggleEmp(i) {
+  const e = S.staff[i];
+  if (e.active) {
+    openSheet(`<h3>停用 ${esc(e.name)}？</h3><div class="sub" style="font-size:14px">停用後他的專屬連結會立即失效，已排的休假記錄會保留。之後可以再打開。</div>
+      <button class="b-no full" style="width:100%" onclick="act({action:'adminStaff',row:${e.row},name:'${esc(e.name)}',role:'${e.role}',quota:${e.quota},active:false},'已停用')">確定停用</button>
+      <button class="b-ghost full" onclick="closeSheet()">取消</button>`);
+  } else act({ action: 'adminStaff', row: e.row, name: e.name, role: e.role, quota: e.quota, active: true }, '已重新啟用');
+}
+function copyLink(i) {
+  const url = S.staff[i].link;
+  const done = () => toast(`已複製 ${S.staff[i].name} 的連結`);
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, () => fallbackCopy(url, done));
+  else fallbackCopy(url, done);
+}
+function fallbackCopy(url, done) {
+  const t = document.createElement('textarea'); t.value = url; t.style.position = 'fixed'; t.style.opacity = '0';
+  document.body.appendChild(t); t.select();
+  try { document.execCommand('copy'); done(); } catch (e) { openSheet(`<h3>專屬連結</h3><textarea onclick="this.select()">${esc(url)}</textarea>`); }
+  t.remove();
+}
+
+/* ---- 設定 ---- */
+let SET = null;
+function pageSet() {
+  const s = S.settings;
+  SET = SET || { am: s.amDefault, pm: s.pmDefault, wk: s.closedWeekdays.slice() };
+  return `<h2>選休時間</h2>
+    <div class="card">
+      <div class="r1"><span>開放時間</span><span class="v" onclick="timePanel('open')">${s.openAuto ? `自動・每月 ${s.openDay} 日 ${s.openTime}` : dt(S.open)} ›</span></div>
+      <div class="r1"><span>截止時間</span><span class="v" onclick="timePanel('deadline')">${s.deadlineAuto ? `自動・每月 ${s.closeDay} 日 ${s.closeTime}` : dt(S.deadline)} ›</span></div>
+      <div class="r1"><span>允許員工自行取消</span><div class="tog ${s.allowCancel ? '' : 'offt'}" onclick="act({action:'adminSettings',allowCancel:${!s.allowCancel}})"></div></div>
+      <div class="r1"><span>顯示誰休哪天</span><div class="tog ${s.showNames ? '' : 'offt'}" onclick="act({action:'adminSettings',showNames:${!s.showNames}})"></div></div>
+    </div>
+    <h2>預設名額與固定公休</h2>
+    <div class="card">
+      <div class="r1"><span>早班可休</span>${stepper('SET.am', SET.am, 'render()')}</div>
+      <div class="r1"><span>晚班可休</span>${stepper('SET.pm', SET.pm, 'render()')}</div>
+      <div class="r1"><span>每週固定公休</span><div class="wk">${WD.map((w, i) => `<span class="${SET.wk.includes(i) ? 'on' : ''}" onclick="SET.wk=SET.wk.includes(${i})?SET.wk.filter(x=>x!==${i}):SET.wk.concat(${i});render()">${w}</span>`).join('')}</div></div>
+      <div class="sub">這裡的設定用在「之後自動建立」的月份；已建立的日期請到總覽逐日調整。</div>
+      <button class="b-ok full" style="width:100%" onclick="act({action:'adminSettings',amDefault:SET.am,pmDefault:SET.pm,closedWeekdays:SET.wk.sort().map(i=>WD[i]).join('')});SET=null">儲存</button>
+    </div>
+    <h2>國定假日／特殊店休</h2>
+    <div class="card">
+      ${S.holidays.length ? S.holidays.map(h => `<div class="hol"><span>${h.date.slice(0, 4)}/${md(h.date)}</span><span>${esc(h.name)} <span class="x" onclick="delHol('${h.date}','${esc(h.name)}')">✕</span></span></div>`).join('') : '<div class="empty">還沒有設定</div>'}
+      <button class="b-ghost full" style="width:100%" onclick="holPanel()">＋ 新增公休日</button>
+    </div>`;
+}
+function timePanel(which) {
+  const s = S.settings, auto = which === 'open' ? s.openAuto : s.deadlineAuto;
+  const cur = which === 'open' ? S.open : S.deadline;
+  const v = cur ? new Date(cur - new Date(cur).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
+  const nm = which === 'open' ? '開放時間' : '截止時間';
+  openSheet(`<h3>${nm}</h3>
+    <div class="sub">自動＝每月 ${which === 'open' ? s.openDay + ' 日 ' + s.openTime : s.closeDay + ' 日 ' + s.closeTime}。臨時調整可指定時間，之後記得改回自動。</div>
+    <label class="f">指定時間</label><input type="datetime-local" id="tv" value="${v}">
+    <button class="b-ok full" style="width:100%" onclick="const x=$('tv').value;if(!x)return toast('請選擇時間',true);act({action:'adminSettings',${which}:x.replace('T',' ').replace(/-/g,'/')})">使用指定時間</button>
+    ${auto ? '' : `<button class="b-ghost full" style="width:100%" onclick="act({action:'adminSettings',${which}:'自動'})">改回自動</button>`}`);
+}
+function holPanel() {
+  openSheet(`<h3>新增公休日</h3>
+    <label class="f">日期</label><input type="date" id="hd">
+    <label class="f">名稱（員工會看到）</label><input type="text" id="hn" placeholder="例：元旦、春節、店休">
+    <button class="b-ok full" style="width:100%" onclick="if(!$('hd').value)return toast('請選擇日期',true);act({action:'adminHoliday',op:'add',date:$('hd').value,name:$('hn').value},'已新增公休日')">新增</button>`);
+}
+function delHol(date, name) {
+  openSheet(`<h3>刪除公休日？</h3><div class="sub" style="font-size:14px">${md(date)} ${name}<br>刪除後這天會恢復成一般營業日（使用原本的名額）。</div>
+    <button class="b-no full" style="width:100%" onclick="act({action:'adminHoliday',op:'del',date:'${date}'},'已刪除')">確定刪除</button>
+    <button class="b-ghost full" onclick="closeSheet()">取消</button>`);
+}
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S && !busy && !$('mask').classList.contains('show')) load(); });
+load(true);
+</script>
+</body>
+</html>
